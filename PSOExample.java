@@ -5,10 +5,10 @@ import java.util.concurrent.ThreadLocalRandom;
 public class PSOExample {
     public static void main(String[] args) {
         int dimension = 24;
-        int swarmSize = 1024;
+        int swarmSize = 72; // 说来奇怪，对于24维的rosenbrock，粒子数1024表现很好
         int maxIter = 2048;
 
-        // 定义目标函数
+        // 定义目标函数。注意，这个只是一个二维函数！
         // https://zhuanlan.zhihu.com/p/564819718
         Objective demoFunc = new Objective() {
             public double xmin() { return -4; }
@@ -43,7 +43,7 @@ public class PSOExample {
             }
         };
 
-        Objective objFunc = rosenbrock;
+        Objective objFunc = rastrigin;
 
         // 创建全局最优对象
         Global global = new Global(dimension);
