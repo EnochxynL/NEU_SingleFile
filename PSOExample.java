@@ -4,12 +4,13 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class PSOExample {
     public static void main(String[] args) {
-        int dimension = 2;
-        int swarmSize = 30;
-        int maxIter = 100;
+        int dimension = 24;
+        int swarmSize = 1024;
+        int maxIter = 2048;
 
-        // 定义目标函数（例如 Sphere 函数）
-        Objective objFunc = new Objective() {
+        // 定义目标函数
+        // https://zhuanlan.zhihu.com/p/564819718
+        Objective demoFunc = new Objective() {
             public double xmin() { return -4; }
             public double xmax() { return 4; }
             public double function(double[] x) {
@@ -19,6 +20,30 @@ public class PSOExample {
                 return 3 * Math.cos(x0 * y0) + x0 + y0 * y0;
             }
         };
+        Objective rastrigin = new Objective() {
+            public double xmin() { return -5.12; }
+            public double xmax() { return 5.12; }
+            public double function(double[] x) {
+                double sum = 10 * x.length;
+                for (int i = 0; i < x.length; i++) {
+                    sum += x[i] * x[i] - 10 * Math.cos(2 * Math.PI * x[i]);
+                }
+                return sum;
+            }
+        };
+        Objective rosenbrock = new Objective() {
+            public double xmin() { return -5; }
+            public double xmax() { return 10; }
+            public double function(double[] x) {
+                double sum = 0.0;
+                for (int i = 0; i < x.length - 1; i++) {
+                    sum += 100 * Math.pow(x[i + 1] - x[i] * x[i], 2) + Math.pow(x[i] - 1, 2);
+                }
+                return sum;
+            }
+        };
+
+        Objective objFunc = rosenbrock;
 
         // 创建全局最优对象
         Global global = new Global(dimension);
@@ -62,6 +87,7 @@ public class PSOExample {
             }
         }
         else {
+            // 使用线程池并发执行
             ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
             for (int iter = 0; iter < maxIter; iter++) {
@@ -76,7 +102,7 @@ public class PSOExample {
                 System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
                     iter, global.gbest[0], global.gbest[1], global.gvalue);
 
-                // 重新开启线程池用于下一轮
+                // [ ]: 是否需要重新开启线程池用于下一轮？
                 if (iter < maxIter - 1) pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
             }
         }
