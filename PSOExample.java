@@ -5,10 +5,10 @@ import java.util.concurrent.ThreadLocalRandom;
 public class PSOExample {
     public static void main(String[] args) {
         int dimension = 24;
-        int swarmSize = 72; // ËµÀ´Ææ¹Ö£¬¶ÔÓÚ24Î¬µÄrosenbrock£¬Á£×ÓÊı1024±íÏÖºÜºÃ
+        int swarmSize = 72; // è¯´æ¥å¥‡æ€ªï¼Œå¯¹äº24ç»´çš„rosenbrockï¼Œç²’å­æ•°1024è¡¨ç°å¾ˆå¥½
         int maxIter = 2048;
 
-        // ¶¨ÒåÄ¿±êº¯Êı¡£×¢Òâ£¬Õâ¸öÖ»ÊÇÒ»¸ö¶şÎ¬º¯Êı£¡
+        // å®šä¹‰ç›®æ ‡å‡½æ•°ã€‚æ³¨æ„ï¼Œè¿™ä¸ªåªæ˜¯ä¸€ä¸ªäºŒç»´å‡½æ•°ï¼
         // https://zhuanlan.zhihu.com/p/564819718
         Objective demoFunc = new Objective() {
             public double xmin() { return -4; }
@@ -45,35 +45,35 @@ public class PSOExample {
 
         Objective objFunc = rastrigin;
 
-        // ´´½¨È«¾Ö×îÓÅ¶ÔÏó
+        // åˆ›å»ºå…¨å±€æœ€ä¼˜å¯¹è±¡
         Global global = new Global(dimension);
 
-        // ´´½¨Á£×ÓÈº
+        // åˆ›å»ºç²’å­ç¾¤
         Particle[] swarm = new Particle[swarmSize];
         for (int i = 0; i < swarmSize; i++) {
             swarm[i] = new Particle(dimension, 1.5, 1.5, 0.9, objFunc, global);
         }
 
         if (false) {
-            // µü´úÓÅ»¯
+            // è¿­ä»£ä¼˜åŒ–
             for (int iter = 0; iter < maxIter; iter++) {
                 for (Particle p : swarm) {
                     p.run();
                 }
-                // ¿ÉÑ¡£ºÊä³öµ±Ç°µü´úµÄÈ«¾Ö×îÓÅ
+                // å¯é€‰ï¼šè¾“å‡ºå½“å‰è¿­ä»£çš„å…¨å±€æœ€ä¼˜
                 System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
                     iter, global.gbest[0], global.gbest[1], global.gvalue);
             }
         }
         else if (false) {
-            // ²¢ĞĞµü´úÓÅ»¯
+            // å¹¶è¡Œè¿­ä»£ä¼˜åŒ–
             for (int iter = 0; iter < maxIter; iter++) {
                 Thread[] threads = new Thread[swarmSize];
                 for (int i = 0; i < swarmSize; i++) {
                     threads[i] = new Thread(swarm[i]);
                     threads[i].start();
                 }
-                // µÈ´ıËùÓĞÏß³ÌÍê³É
+                // ç­‰å¾…æ‰€æœ‰çº¿ç¨‹å®Œæˆ
                 for (int i = 0; i < swarmSize; i++) {
                     try {
                         threads[i].join();
@@ -81,56 +81,56 @@ public class PSOExample {
                         e.printStackTrace();
                     }
                 }
-                // ¿ÉÑ¡£ºÊä³öµ±Ç°µü´úµÄÈ«¾Ö×îÓÅ
+                // å¯é€‰ï¼šè¾“å‡ºå½“å‰è¿­ä»£çš„å…¨å±€æœ€ä¼˜
                 System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
                     iter, global.gbest[0], global.gbest[1], global.gvalue);
             }
         }
         else {
-            // Ê¹ÓÃÏß³Ì³Ø²¢·¢Ö´ĞĞ
+            // ä½¿ç”¨çº¿ç¨‹æ± å¹¶å‘æ‰§è¡Œ
             ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
             for (int iter = 0; iter < maxIter; iter++) {
                 for (Particle p : swarm) {
-                    pool.execute(p); // ²¢·¢Ö´ĞĞÃ¿¸öÁ£×ÓµÄrun·½·¨
+                    pool.execute(p); // å¹¶å‘æ‰§è¡Œæ¯ä¸ªç²’å­çš„runæ–¹æ³•
                 }
                 pool.shutdown();
                 while (!pool.isTerminated()) {
-                    // µÈ´ıËùÓĞÁ£×Ó±¾ÂÖ¸üĞÂÍê³É
+                    // ç­‰å¾…æ‰€æœ‰ç²’å­æœ¬è½®æ›´æ–°å®Œæˆ
                 }
-                // Êä³öµ±Ç°µü´úÈ«¾Ö×îÓÅ
+                // è¾“å‡ºå½“å‰è¿­ä»£å…¨å±€æœ€ä¼˜
                 System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
                     iter, global.gbest[0], global.gbest[1], global.gvalue);
 
-                // [ ]: ÊÇ·ñĞèÒªÖØĞÂ¿ªÆôÏß³Ì³ØÓÃÓÚÏÂÒ»ÂÖ£¿
+                // [ ]: æ˜¯å¦éœ€è¦é‡æ–°å¼€å¯çº¿ç¨‹æ± ç”¨äºä¸‹ä¸€è½®ï¼Ÿ
                 if (iter < maxIter - 1) pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
             }
         }
 
-        // Êä³ö×îÖÕ½á¹û
-        System.out.println("×îÖÕÈ«¾Ö×îÓÅÎ»ÖÃ: ");
+        // è¾“å‡ºæœ€ç»ˆç»“æœ
+        System.out.println("æœ€ç»ˆå…¨å±€æœ€ä¼˜ä½ç½®: ");
         for (double v : global.gbest) System.out.printf("%.6f ", v);
-        System.out.println("\n×îÖÕÈ«¾Ö×îÓÅÖµ: " + global.gvalue);
+        System.out.println("\næœ€ç»ˆå…¨å±€æœ€ä¼˜å€¼: " + global.gvalue);
     }
 }
 
 class Particle implements Runnable {
-    public int dimension = 2; //Î¬Êı
+    public int dimension = 2; //ç»´æ•°
 
     public double[] xmin;
     public double[] xmax;
 
-    public double[] position; //Î»ÖÃ
-    public double[] pvelocity; //ËÙ¶È
-    public double[] pbest; //¸öÌå×îÓÅÎ»ÖÃ
-    public double pvalue = Double.MAX_VALUE; //¸öÌå×îÓÅÊÊÓ¦Öµ
+    public double[] position; //ä½ç½®
+    public double[] pvelocity; //é€Ÿåº¦
+    public double[] pbest; //ä¸ªä½“æœ€ä¼˜ä½ç½®
+    public double pvalue = Double.MAX_VALUE; //ä¸ªä½“æœ€ä¼˜é€‚åº”å€¼
 
     final public Objective objFunc;
     final public Global global;
-    public double c1 = 1.5; //Ñ§Ï°Òò×Ó
-    public double c2 = 1.5; //Ñ§Ï°Òò×Ó
-    public double w = 0.9; //¹ßĞÔÈ¨ÖØ
-    // [ ]: ½¨Òé£ºÔö¼ÓËÙ¶ÈÉÏÏÂÏŞÊôĞÔ
+    public double c1 = 1.5; //å­¦ä¹ å› å­
+    public double c2 = 1.5; //å­¦ä¹ å› å­
+    public double w = 0.9; //æƒ¯æ€§æƒé‡
+    // [ ]: å»ºè®®ï¼šå¢åŠ é€Ÿåº¦ä¸Šä¸‹é™å±æ€§
 
     public Particle(int dimension, double c1, double c2, double w, Objective objFunc, Global global) {
         this.dimension = dimension;
@@ -157,51 +157,51 @@ class Particle implements Runnable {
     }
 
     public static double rand() {
-        // Ê¹ÓÃ ThreadLocalRandom ±ÜÃâÃ¿´Î new Random()
+        // ä½¿ç”¨ ThreadLocalRandom é¿å…æ¯æ¬¡ new Random()
         return ThreadLocalRandom.current().nextDouble();
     }
 
-    //¼ÆËãÊÊÓ¦Öµ
+    //è®¡ç®—é€‚åº”å€¼
     public double eval() {
         return objFunc.function(this.position);
     }
 
     public void run() {
 
-        // È¡Ò»·İ¸öÌå×îÓÅµÄ±¾µØ¸±±¾£¬±ÜÃâ³¤Ê±¼ä³ÖËø£¨synchronizedÒâÒåÊÇ¸ø±äÁ¿¼Ó»¥³âËø£©
+        // å–ä¸€ä»½ä¸ªä½“æœ€ä¼˜çš„æœ¬åœ°å‰¯æœ¬ï¼Œé¿å…é•¿æ—¶é—´æŒé”ï¼ˆsynchronizedæ„ä¹‰æ˜¯ç»™å˜é‡åŠ äº’æ–¥é”ï¼‰
         double[] copy_global_gbest = new double[this.dimension];
         synchronized (this.global) {
             System.arraycopy(this.global.gbest, 0, copy_global_gbest, 0, this.dimension);
         }
         
-        // [x]: ÌØĞÔ£º¼ÓÉÏ¹ßĞÔÈ¨ÖØ¡£
-        // ¸ù¾İÈ«ÌåĞÅÏ¢ºÍ¸öÌåĞÅÏ¢½øĞĞµÄËÙ¶È¸üĞÂ
+        // [x]: ç‰¹æ€§ï¼šåŠ ä¸Šæƒ¯æ€§æƒé‡ã€‚
+        // æ ¹æ®å…¨ä½“ä¿¡æ¯å’Œä¸ªä½“ä¿¡æ¯è¿›è¡Œçš„é€Ÿåº¦æ›´æ–°
         for (int i = 0; i < this.dimension; i++) {
-            double rand1 = rand(); // [x]: ÌØĞÔ£º°´Î¬¶ÈÉú³ÉËæ»úÊı
+            double rand1 = rand(); // [x]: ç‰¹æ€§ï¼šæŒ‰ç»´åº¦ç”Ÿæˆéšæœºæ•°
             double rand2 = rand();
             this.pvelocity[i] = this.w * this.pvelocity[i] + 
                                 this.c2 * rand2 * (copy_global_gbest[i] - this.position[i]) + 
                                 this.c1 * rand1 * (this.pbest[i] - this.position[i]);
         }
 
-        // Î»ÖÃ¸üĞÂ
+        // ä½ç½®æ›´æ–°
         for (int i = 0; i < this.dimension; i++) {
             this.position[i] += this.pvelocity[i];
-            // ±ß½çÏŞÖÆ
+            // è¾¹ç•Œé™åˆ¶
             if (this.position[i] < this.xmin[i]) this.position[i] = this.xmin[i];
             if (this.position[i] > this.xmax[i]) this.position[i] = this.xmax[i];
         }
 
-        // ¸öÌå×îÓÅÎ»ÖÃºÍ¸öÌå×îÓÅÊÊÓ¦Öµ¸üĞÂ
+        // ä¸ªä½“æœ€ä¼˜ä½ç½®å’Œä¸ªä½“æœ€ä¼˜é€‚åº”å€¼æ›´æ–°
         double tmp_value = eval();
         if (tmp_value < this.pvalue) {
             this.pvalue = tmp_value;
             System.arraycopy(this.position, 0, this.pbest, 0, this.dimension);
         }
         
-        // [x]: ÌØĞÔ£ºµ¥¸öÁ£×ÓĞÅÏ¢Òì²½¸üĞÂ
+        // [x]: ç‰¹æ€§ï¼šå•ä¸ªç²’å­ä¿¡æ¯å¼‚æ­¥æ›´æ–°
         synchronized (this.global) {
-            // È«Ìå×îÓÅÎ»ÖÃºÍÈ«Ìå×îÓÅÊÊÓ¦Öµ¸üĞÂ
+            // å…¨ä½“æœ€ä¼˜ä½ç½®å’Œå…¨ä½“æœ€ä¼˜é€‚åº”å€¼æ›´æ–°
             if (tmp_value < this.global.gvalue) {
                 this.global.gvalue = tmp_value;
                 System.arraycopy(this.position, 0, this.global.gbest, 0, this.dimension);
@@ -211,17 +211,17 @@ class Particle implements Runnable {
 }
 
 class Global {
-    public double[] gbest;//È«¾Ö×îÓÅÎ»ÖÃ
-    public double gvalue = Double.MAX_VALUE;//È«¾Ö×îÓÅÊÊÓ¦Öµ
+    public double[] gbest;//å…¨å±€æœ€ä¼˜ä½ç½®
+    public double gvalue = Double.MAX_VALUE;//å…¨å±€æœ€ä¼˜é€‚åº”å€¼
     
-    // ĞÂÔö¹¹ÔìÆ÷£¬È·±£ gbest ±»ÕıÈ··ÖÅä
+    // æ–°å¢æ„é€ å™¨ï¼Œç¡®ä¿ gbest è¢«æ­£ç¡®åˆ†é…
     public Global(int dimension) {
         this.gbest = new double[dimension];
     }
 }
 
 interface Objective {
-    //Ä¿±êº¯Êı
+    //ç›®æ ‡å‡½æ•°
     public double xmin();
     public double xmax();
     public double function(double[] x);
