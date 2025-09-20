@@ -1,11 +1,12 @@
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 public class PSOExample {
     public static void main(String[] args) {
         int dimension = 24;
-        int swarmSize = 72; // 说来奇怪，对于24维的rosenbrock，粒子数1024表现很好
+        int swarmSize = 96; // 说来奇怪，对于24维的rosenbrock，粒子数1024表现很好
         int maxIter = 2048;
 
         // 定义目标函数。注意，这个只是一个二维函数！
@@ -54,58 +55,8 @@ public class PSOExample {
             swarm[i] = new Particle(dimension, 1.5, 1.5, 0.9, objFunc, global);
         }
 
-        if (false) {
-            // 迭代优化
-            for (int iter = 0; iter < maxIter; iter++) {
-                for (Particle p : swarm) {
-                    p.run();
-                }
-                // 可选：输出当前迭代的全局最优
-                System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
-                    iter, global.gbest[0], global.gbest[1], global.gvalue);
-            }
-        }
-        else if (false) {
-            // 并行迭代优化
-            for (int iter = 0; iter < maxIter; iter++) {
-                Thread[] threads = new Thread[swarmSize];
-                for (int i = 0; i < swarmSize; i++) {
-                    threads[i] = new Thread(swarm[i]);
-                    threads[i].start();
-                }
-                // 等待所有线程完成
-                for (int i = 0; i < swarmSize; i++) {
-                    try {
-                        threads[i].join();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                // 可选：输出当前迭代的全局最优
-                System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
-                    iter, global.gbest[0], global.gbest[1], global.gvalue);
-            }
-        }
-        else {
-            // 使用线程池并发执行
-            ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-            for (int iter = 0; iter < maxIter; iter++) {
-                for (Particle p : swarm) {
-                    pool.execute(p); // 并发执行每个粒子的run方法
-                }
-                pool.shutdown();
-                while (!pool.isTerminated()) {
-                    // 等待所有粒子本轮更新完成
-                }
-                // 输出当前迭代全局最优
-                System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
-                    iter, global.gbest[0], global.gbest[1], global.gvalue);
-
-                // [ ]: 是否需要重新开启线程池用于下一轮？
-                if (iter < maxIter - 1) pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-            }
-        }
+        PSOOptimizer optimizer = new SequentialPSO(); // 或 new ThreadedPSO(), new PooledPSO()
+        optimizer.optimize(swarm, global, maxIter);
 
         // 输出最终结果
         System.out.println("最终全局最优位置: ");
@@ -113,6 +64,76 @@ public class PSOExample {
         System.out.println("\n最终全局最优值: " + global.gvalue);
     }
 }
+
+interface PSOOptimizer {
+    void optimize(Particle[] swarm, Global global, int maxIter);
+}
+
+class SequentialPSO implements PSOOptimizer {
+    // 单线程版本
+    public void optimize(Particle[] swarm, Global global, int maxIter) {
+        for (int iter = 0; iter < maxIter; iter++) {
+            for (Particle p : swarm) {
+                p.run();
+            }
+            // 输出当前迭代的全局最优
+            System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
+                iter, global.gbest[0], global.gbest[1], global.gvalue);
+        }
+    }
+}
+
+class ThreadedPSO implements PSOOptimizer {
+    // 多线程版本
+    public void optimize(Particle[] swarm, Global global, int maxIter) {
+        for (int iter = 0; iter < maxIter; iter++) {
+            Thread[] threads = new Thread[swarm.length];
+            for (int i = 0; i < swarm.length; i++) {
+                threads[i] = new Thread(swarm[i]);
+                threads[i].start();
+            }
+            // 等待所有线程完成
+            for (int i = 0; i < swarm.length; i++) {
+                try {
+                    threads[i].join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            // 输出当前迭代的全局最优
+            System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
+                iter, global.gbest[0], global.gbest[1], global.gvalue);
+        }
+    }
+}
+
+class PooledPSO implements PSOOptimizer {
+    public void optimize(Particle[] swarm, Global global, int maxIter) {
+        // 线程池并发执行版本
+        ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        for (int iter = 0; iter < maxIter; iter++) {
+            for (Particle p : swarm) {
+                // 并发执行每个粒子的run方法
+                pool.execute(p);
+            }
+            pool.shutdown();
+            try {
+                // 等待所有粒子本轮更新完成
+                pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            // 输出当前迭代的全局最优
+            System.out.printf("Iter %d: gbest = [%.4f, %.4f], gvalue = %.6f%n",
+                iter, global.gbest[0], global.gbest[1], global.gvalue);
+            // [ ]: 是否需要重新开启线程池用于下一轮？
+            if (iter < maxIter - 1)
+                pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        }
+    }
+}
+
+
 
 class Particle implements Runnable {
     public int dimension = 2; //维数
